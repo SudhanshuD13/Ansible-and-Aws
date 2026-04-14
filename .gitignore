@@ -1,0 +1,16 @@
+# Sensitive
+.aws/
+.ssh/
+.env
+
+# Editor / system
+.viminfo
+*.swp
+.DS_Store
+
+# Keys
+*.pem
+.aws/
+.ssh/
+.viminfo
+.viminfo

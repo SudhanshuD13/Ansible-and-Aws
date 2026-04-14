@@ -1,0 +1,16 @@
+---
+- name: Install and start nginx #name of the playbook; also for multiple playbooks we can just: [- name]
+  hosts: all   # name the hosts we want to work on
+  become: true   # to become user , also can use become-user
+
+  tasks:  # things which needs to be done on the host machine
+    - name: Install Nginx #name the task
+      apt:     #also you can use shell: apt install nginx
+        name: nginx
+        state: present
+    - name: Run NGINX   
+      service:  #also you can use  shell: systemctl start nginx
+        name: nginx
+        state: started
+
+

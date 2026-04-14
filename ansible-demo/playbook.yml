@@ -1,0 +1,81 @@
+---
+- name: Setup Web Application Server
+  hosts: web
+  become: true
+  vars_files:
+    - vars.yml
+
+  tasks:
+
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+
+    - name: Install required packages
+      apt:
+        name:
+          - nginx
+          - python3-pip
+          - python3-venv
+        state: present
+
+    - name: Create Virtual Environment
+      command: python3 -m venv /home/ubuntu/myappenv
+      args:
+        creates: /home/ubuntu/myappenv
+
+    - name: Install flask inside venv 
+      pip:
+        name: flask
+        virtualenv: /home/ubuntu/myappenv
+
+    - name: Copy App file
+      copy:
+        src: files/app.py
+        dest: /home/ubuntu/app.py
+      notify: Restart App
+
+    - name: Create systemd service
+      copy:
+        dest: /etc/systemd/system/myapp.service
+        content: |
+          [Unit]
+          Description=Flask App
+          After=network.target
+
+          [Service]
+          ExecStart=/home/ubuntu/myappenv/bin/python /home/ubuntu/app.py
+          Restart=always
+          User=ubuntu
+
+          [Install]
+          WantedBy=multi-user.target
+      notify: Restart App
+
+    - name: Configure nginx
+      template:
+        src: templates/nginx.conf.j2
+        dest: /etc/nginx/sites-available/default
+      notify: Restart App
+
+    - name: Ensure Service are running
+      systemd:
+        name: "{{ item }}"
+        enabled: yes
+        state: started
+      loop:
+        - nginx
+        - myapp
+
+
+
+  handlers:
+    - name: Restart Nginx
+      systemd:
+        name: nginx
+        state: restarted
+
+    - name: Restart App
+      systemd:
+        name: myapp
+        state: restarted
